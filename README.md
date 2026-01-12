@@ -67,7 +67,7 @@ Acceso recomendado con FileZilla:
 
 ## 🧪 5. Pruebas
 FTP anónimo en consola
- ftp <IP>
+    ftp <IP_MAQUINA>
 
 FTP seguro con lftp
-    lftp -u usuario,pass -e "set ftp:ssl-force true" <IP>
+    lftp -u usuario,pass -e "set ftp:ssl-force true" <IP_MAQUINA>
