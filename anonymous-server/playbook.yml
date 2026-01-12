@@ -1,15 +1,18 @@
 ---
-- hosts: ftp
+- hosts: anonimo
   become: yes
 
   tasks:
-    - name: Instalar vsftpd
+
+    - name: Install vsftpd and FTP client
       apt:
-        name: vsftpd
+        name:
+          - vsftpd      # FTP server package
+          - ftp         # FTP client for testing
         state: present
         update_cache: yes
 
-    - name: Crear carpeta FTP
+    - name: Create FTP directory
       file:
         path: /srv/ftp
         state: directory
@@ -17,18 +20,18 @@
         group: ftp
         mode: '0755'
 
-    - name: Crear archivo INFO de bienvenida
+    - name: Create welcome INFO file
       copy:
         dest: /srv/ftp/INFO
         content: |
           --
-          -- Servidor anónimo
-          -- Máximo de 200 conexiones activas simultáneas.
-          -- Ancho de banda de 50KB por usuario
-          -- Timeout de inactividad de 30 segundos
+          -- Anonymous FTP Server
+          -- Maximum 200 simultaneous connections
+          -- Bandwidth limited to 50KB/s
+          -- Inactivity timeout: 30 seconds
           --
 
-    - name: Configurar vsftpd
+    - name: Configure vsftpd
       copy:
         dest: /etc/vsftpd.conf
         content: |
@@ -39,7 +42,7 @@
           local_enable=NO
           write_enable=NO
           banner_file=/srv/ftp/INFO
-          ftpd_banner=-- Mirror de Opensuse para 'sistema.sol' --
+          ftpd_banner=-- Anonymous FTP Mirror for 'sistema.sol' --
           anon_root=/srv/ftp
           max_clients=200
           anon_max_rate=50000
@@ -48,8 +51,9 @@
         group: root
         mode: '0644'
 
-    - name: Reiniciar servicio
+    - name: Restart vsftpd service
       systemd:
         name: vsftpd
         state: restarted
         enabled: yes
+

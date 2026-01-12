@@ -1,0 +1,22 @@
+Vagrant.configure("2") do |config|
+
+  # Base VM image
+  config.vm.box = "debian/bookworm64"
+
+  config.vm.define "anonimo" do |a|
+    # Hostname
+    config.vm.hostname = "mirror.sistema.sol"
+
+    # Private network IP
+    config.vm.network "private_network", ip: "192.168.56.10"
+
+    # Run playbook automatically
+    config.vm.provision "ansible" do |ansible|
+      ansible.playbook = "./playbook.yml"
+    end
+  end
+
+end
+
+
+
