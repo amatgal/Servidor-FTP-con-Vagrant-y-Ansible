@@ -66,8 +66,8 @@ Acceso recomendado con FileZilla:
 - Usuario: usuario definido en VM
 
 ## 🧪 5. Pruebas
-FTP anónimo en consola
+FTP anónimo en consola:
     ftp <IP_MAQUINA>
 
-FTP seguro con lftp
+FTP seguro con lftp:
     lftp -u usuario,pass -e "set ftp:ssl-force true" <IP_MAQUINA>
