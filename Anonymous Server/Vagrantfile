@@ -1,5 +1,20 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/focal64"
+
+  config.vm.box = "debian/bookworm64"
+  config.vm.hostname = "mirror.sistema.sol"
   config.vm.network "private_network", ip: "192.168.56.10"
+
+  # Install Ansible inside the VM
+  config.vm.provision "shell", inline: <<-SHELL
+    apt update
+    apt install -y ansible
+  SHELL
+
+  # Execute playbook automatically
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "/vagrant/playbook.yml"
+    ansible.inventory_path = "/vagrant/inventory"
+  end
 end
+
 
