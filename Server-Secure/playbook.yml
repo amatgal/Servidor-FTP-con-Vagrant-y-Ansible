@@ -1,0 +1,151 @@
+- hosts: all
+ become: yes
+
+
+ vars:
+   ftp_users:
+     - { name: "luis", pass: "luis123" }
+     - { name: "maria", pass: "maria123" }
+     - { name: "miguel", pass: "miguel123" }
+   ssl_cert: /etc/ssl/certs/example.test.pem
+
+
+ tasks:
+
+
+   # -----------------------------
+   # Instalar vsftpd
+   # -----------------------------
+   - name: Instalar vsftpd
+     apt:
+       name: vsftpd
+       state: present
+       update_cache: yes
+
+
+   # -----------------------------
+   # Backup de configuración
+   # -----------------------------
+   - name: Backup de vsftpd.conf
+     copy:
+       src: /etc/vsftpd.conf
+       dest: /etc/vsftpd.conf.bak
+       remote_src: yes
+
+
+   # -----------------------------
+   # Crear usuarios locales con contraseñas
+   # -----------------------------
+   - name: Crear usuarios FTP locales
+     user:
+       name: "{{ item.name }}"
+       shell: /bin/bash
+       create_home: yes
+       password: "{{ item.pass | password_hash('sha512') }}"
+     loop: "{{ ftp_users }}"
+
+
+   # -----------------------------
+   # Crear archivos de prueba
+   # -----------------------------
+   - name: Crear archivos para luis
+     copy:
+       dest: "/home/luis/{{ item }}"
+       content: "Archivo {{ item }}"
+       owner: luis
+       group: luis
+       mode: "0644"
+     loop:
+       - luis1.txt
+       - luis2.txt
+
+
+   - name: Crear archivos para maria
+     copy:
+       dest: "/home/maria/{{ item }}"
+       content: "Archivo {{ item }}"
+       owner: maria
+       group: maria
+       mode: "0644"
+     loop:
+       - maria1.txt
+       - maria2.txt
+
+
+   # -----------------------------
+   # Crear certificado SSL autofirmado
+   # -----------------------------
+   - name: Crear certificado SSL autofirmado
+     command: >
+       openssl req -x509 -nodes -days 365
+      -newkey rsa:2048
+      -keyout {{ ssl_cert }}
+      -out {{ ssl_cert }}
+      -subj "/C=ES/ST=Andalucia/L=Sevilla/O=FP/OU=ASIR/CN=ftp.example.test"
+     args:
+       creates: "{{ ssl_cert }}"
+
+
+   - name: Ajustar permisos del certificado SSL
+     file:
+       path: "{{ ssl_cert }}"
+       owner: root
+       group: root
+       mode: "0600"
+
+
+   # -----------------------------
+   # Configurar vsftpd con SSL
+   # -----------------------------
+   - name: Configurar vsftpd
+     copy:
+       dest: /etc/vsftpd.conf
+       content: |
+         listen=YES
+        listen_ipv6=NO
+
+
+        anonymous_enable=YES
+        local_enable=YES
+        write_enable=YES
+
+
+        chroot_local_user=YES
+        allow_writeable_chroot=YES
+        chroot_list_enable=YES
+        chroot_list_file=/etc/vsftpd.chroot_list
+
+
+        ftpd_banner=--- Welcome to the FTP server of 'sistema.sol' ---
+
+
+        ssl_enable=YES
+        rsa_cert_file={{ ssl_cert }}
+        rsa_private_key_file={{ ssl_cert }}
+        allow_anon_ssl=YES
+        force_local_logins_ssl=YES
+        force_local_data_ssl=YES
+        ssl_tlsv1=YES
+        ssl_sslv2=NO
+        ssl_sslv3=NO
+        require_ssl_reuse=NO
+
+
+   # -----------------------------
+   # Usuario NO enjaulado
+   # -----------------------------
+   - name: Configurar usuario no enjaulado
+     copy:
+       dest: /etc/vsftpd.chroot_list
+       content: |
+         maria
+
+
+   # -----------------------------
+   # Reiniciar servicio
+   # -----------------------------
+   - name: Reiniciar vsftpd
+     service:
+       name: vsftpd
+       state: restarted
+       enabled: yes

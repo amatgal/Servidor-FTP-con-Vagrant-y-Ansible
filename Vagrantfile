@@ -12,9 +12,21 @@ Vagrant.configure("2") do |config|
 
     # Run playbook automatically
     config.vm.provision "ansible" do |ansible|
-      ansible.playbook = "./playbook.yml"
+      ansible.playbook = "./anonymous-server/playbook.yml"
     end
   end
+
+  config.vm.box = "ubuntu/focal64"
+
+
+  config.vm.define "ftpserver" do |s|
+    s.vm.hostname = "ftpserver"
+    s.vm.network "private_network", ip: "192.168.56.20"
+    s.vm.provision "ansible" do |ansible|
+      ansible.playbook = "./Server-Secure/playbook.yml"
+    end
+  end
+
 
 end
 
