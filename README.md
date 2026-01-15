@@ -1,73 +1,77 @@
-# 📦 Práctica: Vagrant + Ansible + FTP (anónimo y seguro)
+📦 Práctica: Vagrant + Ansible + FTP (anónimo y seguro)
 
-Esta práctica consiste en desplegar un entorno automatizado usando **Vagrant y Ansible**  
-y configurar en él dos servicios FTP:
+Este proyecto despliega un entorno automatizado con Vagrant y Ansible, configurando dos servicios FTP:
 
-- ✔️ FTP **anónimo**
-- 🔐 FTP **seguro (FTPS)**
+✔️ FTP anónimo (solo descarga)
 
----
+🔐 FTP seguro (FTPS) con usuarios locales
 
-## 🧰 Tecnologías utilizadas
-- Vagrant
-- VirtualBox
-- Ansible
-- vsftpd
-- OpenSSL (para FTPS)
+🧰 Tecnologías
 
-## ⚙️ Aprovisionamiento con Ansible
+Vagrant + VirtualBox
 
-El playbook principal ejecuta dos roles:
+Ansible
 
-- ftp-anonimo
+vsftpd
 
-- ftp-seguro
+OpenSSL (certificado autofirmado para FTPS)
 
-Para reprovisionar manualmente:
+⚙️ Aprovisionamiento
 
-    vagrant provision
+Para crear y configurar todo:
 
-## 🌐 3. FTP anónimo
+vagrant up
+vagrant provision
 
-El rol ftp-anonimo realiza:
 
-- Instalación y activación del servicio vsftpd
+Esto instalará vsftpd, creará usuarios (luis, maria, miguel), configurará FTP anónimo y FTPS con certificado SSL.
 
-- Habilita acceso anónimo
+🌐 FTP anónimo
 
-- Crea directorio público /srv/ftp
+Directorio público: /srv/ftp
 
-- Permite solo descarga
+Usuario: anonymous
 
-Acceso:
+Contraseña: (vacío)
 
-    ftp <IP_MAQUINA>
-    usuario: anonymous
-    contraseña: (vacío)
+Solo descarga de archivos
 
-## 🔐 4. FTP seguro (FTPS)
+Ejemplo de prueba:
 
-El rol ftp-seguro:
+ftp <IP_VM>
+ls
+put prueba.txt   # ❌ Denegado
 
-- Activa usuarios reales del sistema
+🔐 FTP seguro (FTPS)
 
-- Genera y utiliza certificado SSL
+Usuarios locales con contraseña:
 
-- Obliga conexión cifrada (TLS/SSL)
+luis:luis123 (enjaulado)
 
-- Permite subida y descarga
+miguel:miguel123 (enjaulado)
 
-Acceso recomendado con FileZilla:
+maria:maria123 (no enjaulada)
 
-- Protocolo: FTP sobre TLS
+Certificado autofirmado en /etc/ssl/certs/example.test.pem
 
-- Puerto: 21
+Conexión obligatoria cifrada para usuarios locales
 
-- Usuario: usuario definido en VM
+Ejemplo de prueba con lftp:
 
-## 🧪 5. Pruebas
-FTP anónimo en consola:
-    ftp <IP_MAQUINA>
+lftp -u luis,luis123 ftp://<IP_VM>
+set ssl:verify-certificate no   # ignorar error de certificado autofirmado
+ls
+put prueba.txt   # ✅ funciona
+get luis1.txt    # ✅ funciona
 
-FTP seguro con lftp:
-    lftp -u usuario,pass -e "set ftp:ssl-force true" <IP_MAQUINA>
+
+Usuarios anónimos siguen teniendo solo lectura.
+
+🧪 Comportamiento esperado
+Usuario	Permisos	Enjaulado
+anonymous	descarga únicamente	n/a
+luis	descarga y subida	sí
+miguel	descarga y subida	sí
+maria	descarga y subida	no
+
+💡 Nota: El certificado es autofirmado; para conexiones seguras desde clientes como lftp es necesario desactivar temporalmente la verificación de certificado (set ssl:verify-certificate no).
